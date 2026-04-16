@@ -25,7 +25,10 @@ ExoModel is currently in **Beta (1.0)**. Install it via pip:
 pip install exomodel
 ```
 
-*Ensure you have your environment variables configured (e.g., `GOOGLE_API_KEY` or `OPENAI_API_KEY`).*
+*Ensure you have your environment variables configured: 
+ - LLM Key (e.g., `GOOGLE_API_KEY` or `OPENAI_API_KEY`).*
+ - MY_LLM_MODEL (e.g., `gemini-2.5-flash` or `gpt-4o`).*
+ - MY_EMBEDDING_MODEL (e.g., `gemini-embedding-001` or `text-embedding-3-small`).*
 
 ---
 
