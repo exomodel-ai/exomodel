@@ -1,0 +1,52 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "exomodel"
+version = "0.1.0-beta"
+description = "A core modeling library powered by Pydantic v2"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "Apache-2.0" }
+dependencies = [
+    "python-dotenv>=1.2.2",
+    "pydantic>=2.12.5",
+    "langchain>=1.2.15",
+    "langchain-community>=0.4.1",
+    "langchain-google-genai>=4.2.1",
+    "sqlmodel>=0.0.38",
+    "beautifulsoup4>=4.14.3",
+    "html2text>=2025.4.15",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=9.0.3",
+    "autopep8>=2.3.2",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/exomodel"]
+
+# Pytest Setup for 'src' Layout
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = "-v --tb=short"
+
+# Ruff Setup to maintain clean code
+[tool.ruff]
+line-length = 88
+target-version = "py39"
+
+[tool.ruff.lint]
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+    "B",  # flake8-bugbear
+    "UP", # pyupgrade
+]
+ignore = []

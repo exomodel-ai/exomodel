@@ -1,0 +1,26 @@
+# Environments
+.venv/
+.env
+env/
+venv/
+
+# Python Cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Pytest & Linters
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Build Artifacts
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# IDEs
+.idea/
+.vscode/

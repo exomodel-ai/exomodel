@@ -1,0 +1,49 @@
+cff-version: 1.2.0
+message: "If you use ExoModel, please cite it as below."
+authors:
+  - family-names: "Pessoa"
+    given-names: "Leandro"
+title: "ExoModel"
+date-released: 2026-04-16
+license: Apache-2.0
+url: "https://github.com/exomodel-ai/exomodel"
+
+references:
+  - type: software
+    authors:
+      - family-names: "Chase"
+        given-names: "Harrison"
+    title: "LangChain"
+    url: "https://github.com/langchain-ai/langchain"
+    date-released: 2022-10-17
+
+  - type: software
+    authors:
+      - family-names: Colvin
+        given-names: Samuel
+      - family-names: Jolibois
+        given-names: Eric
+      - family-names: Ramezani
+        given-names: Hasan
+      - family-names: Garcia Badaracco
+        given-names: Adrian
+      - family-names: Dorsey
+        given-names: Terrence
+      - family-names: Montague
+        given-names: David
+      - family-names: Matveenko
+        given-names: Serge
+      - family-names: Trylesinski
+        given-names: Marcelo
+      - family-names: Runkle
+        given-names: Sydney
+      - family-names: Hewitt
+        given-names: David
+      - family-names: Hall
+        given-names: Alex
+      - family-names: Plot
+        given-names: Victorien
+    title: "Pydantic"
+    url: "https://github.com/pydantic/pydantic"
+    version: v2.13.0
+date-released: 2026-04-13
