@@ -3,7 +3,7 @@ message: "If you use ExoModel, please cite it as below."
 authors:
   - family-names: "Pessoa"
     given-names: "Leandro"
-title: "ExoModel"
+title: "ExoModel AI"
 date-released: 2026-04-16
 license: Apache-2.0
 url: "https://github.com/exomodel-ai/exomodel"

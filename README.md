@@ -1,6 +1,6 @@
-# 🌌 ExoModel
+# 🌌 ExoModel AI
 
-**ExoModel** is a professional, high-level Python framework designed to bridge the gap between **structured data** and **Large Language Models (LLMs)**. It allows you to transform static data models into "living" entities capable of autonomous updates, self-analysis, and context-aware interactions using RAG (Retrieval-Augmented Generation).
+**ExoModel AI** is a professional, high-level Python framework designed to bridge the gap between **structured data** and **Large Language Models (LLMs)**. It allows you to transform static data models into "living" entities capable of autonomous updates, self-analysis, and context-aware interactions using RAG (Retrieval-Augmented Generation).
 
 Built on top of LangChain and Pydantic, ExoModel provides a seamless "Object-to-Prompt" interface for building AI-native applications.
 
@@ -19,11 +19,9 @@ Built on top of LangChain and Pydantic, ExoModel provides a seamless "Object-to-
 
 ## 📦 Installation
 
-ExoModel is currently in **Beta (1.0)**. Install it via pip:
+**Warning**: Installation will be available soon. 
 
-```bash
-pip install exomodel
-```
+ExoModel is currently in **Beta (1.0)**. 
 
 *Ensure you have your environment variables configured: 
  - LLM Key (e.g., `GOOGLE_API_KEY` or `OPENAI_API_KEY`).*
