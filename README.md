@@ -19,9 +19,11 @@ Built on top of LangChain and Pydantic, ExoModel provides a seamless "Object-to-
 
 ## 📦 Installation
 
-**Warning**: Installation will be available soon. 
+ExoModel is currently in **Beta (0.1.0)**. You can install it using pip:
 
-ExoModel is currently in **Beta (1.0)**. 
+```bash
+pip install exomodel
+```
 
 *Ensure you have your environment variables configured: 
  - LLM Key (e.g., `GOOGLE_API_KEY` or `OPENAI_API_KEY`).*
