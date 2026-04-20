@@ -70,8 +70,6 @@ segment: Retail & E-commerce
 
 business_challenge: The client faces "Analysis Paralysis" regarding AI investment. While they have vast customer data, they lack a prioritized execution plan, leading to missed opportunities in hyper-personalization and inventory optimization.
 
-solution: AI Strategy
-
 solution_objective: To deliver a "Business-Ready AI Roadmap" that identifies and ranks the top 5 high-ROI AI use cases, aligned with current technical capabilities and market trends.
 
 solution_description: Phase 1: Discovery & Stakeholder Alignment (Weeks 1-3): Deep-dive workshops with Marketing, Logistics, and IT heads to map current pain points. Deliverable: Current State AI Maturity Assessment.

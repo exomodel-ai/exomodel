@@ -1,6 +1,7 @@
 # 🌌 ExoModel AI
+### Object-Oriented Agentic AI
 
-**ExoModel AI** is a professional, high-level Python framework designed to bridge the gap between **structured data** and **Large Language Models (LLMs)**. It allows you to transform static data models into "living" entities capable of autonomous updates, self-analysis, and context-aware interactions using RAG (Retrieval-Augmented Generation).
+**ExoModel AI** is a high-level Python framework designed to bridge the gap between **structured objects** and **Large Language Models (LLMs)**. It allows you to transform static data models into "living" entities capable of autonomous updates, self-analysis, and context-aware interactions using RAG (Retrieval-Augmented Generation).
 
 Built on top of LangChain and Pydantic, ExoModel provides a seamless "Object-to-Prompt" interface for building AI-native applications.
 

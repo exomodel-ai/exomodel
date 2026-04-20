@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import os
+from datetime import datetime
 
 # Set User-Agent for web scraping consistency
 os.environ["USER_AGENT"] = "ExoAgentApp/1.0"
@@ -80,7 +81,18 @@ class ExoAgent:
         documents = []
         for source in self.sources_queue:
             loader = self._get_loader(source)
-            documents.extend(loader.load())
+            docs = loader.load()
+            
+            # Enrich metadata per chunk
+            for doc in docs:
+                doc.metadata["source"] = source
+                doc.metadata["indexed_at"] = datetime.now().isoformat()
+                doc.metadata["source_type"] = (
+                    "pdf" if source.endswith(".pdf")
+                    else "web" if source.startswith("http")
+                    else "text"
+                )
+            documents.extend(docs)
         
         self.sources_queue = []
 
@@ -96,12 +108,27 @@ class ExoAgent:
         # Update RAG tool if vector store is initialized
         if self.vector_store is not None:
             @tool
-            def retrieve_context(query: str):
+            def retrieve_context(query: str) -> str:
                 """Query the private knowledge base to retrieve factual context."""
-                print(f"[DEBUG RAG] Searching for: {query}")
-                retrieved = self.vector_store.similarity_search(query, k=5)
-                print(f"[DEBUG RAG] Documents found: {len(retrieved)}")
-                return "\n\n".join(doc.page_content for doc in retrieved)
+                
+                # similarity_search_with_score retorna (doc, score)
+                results = self.vector_store.similarity_search_with_score(query, k=5)
+                
+                SCORE_THRESHOLD = 0.75  # ajuste conforme o modelo de embedding
+                relevant = [
+                    (doc, score) for doc, score in results 
+                    if score >= SCORE_THRESHOLD
+                ]
+                
+                if not relevant:
+                    return "No sufficiently relevant content found in the knowledge base."
+                
+                chunks = []
+                for doc, score in relevant:
+                    source = doc.metadata.get("source", "unknown")
+                    chunks.append(f"[Source: {source} | Relevance: {score:.2f}]\n{doc.page_content}")
+                
+                return "\n\n---\n\n".join(chunks)
             
             self.rag_tools = [retrieve_context]
         else:
@@ -185,25 +212,6 @@ class ExoAgent:
             )
         }
         return prompts.get(mode, prompts["generalist"])
-
-    def _init_agent_old(self, response_schema: Optional[Type] = None, mode: str = "generalist"):
-        """Reconstructs the agent with updated tools and context."""
-        self._process_pending_rag()
-
-        # Fallback to generalist if specialist/hybrid is requested without RAG data
-        if mode != "generalist" and not self.rag_tools:
-            print(f"Warning: Mode '{mode}' requested without RAG context. Using 'generalist'.")
-            mode = "generalist"
-        
-        system_prompt = self._get_system_prompt(mode)
-        print(f"\n[INIT] Mode: {mode} | System Prompt: {system_prompt[:100]}...")
-
-        # self._agent = create_agent(
-        #     model=self.model_id, 
-        #     tools=self.all_tools, 
-        #     instructions=system_prompt, 
-        #     response_format=response_schema
-        # )    
 
     def _init_agent(self, response_schema: Optional[Type] = None, mode: str = "generalist"):
         """
@@ -290,12 +298,4 @@ class ExoAgent:
         
         markdown_content = converter.handle(html_content)
         return markdown_content[:16000]
-
-# --- Quick Test ---
-if __name__ == "__main__":
-    agent = ExoAgent()
-    # Simple Web Analysis Test
-    content = agent.get_web_markdown("https://techcrunch.com")
-    test_prompt = f"Summarize the main tech news in 2 sentences based on this: {content}"
-    print(f"Response: {agent.run(test_prompt)}")
-    
+        

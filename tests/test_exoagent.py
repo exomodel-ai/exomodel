@@ -18,7 +18,7 @@ def test_get_system_prompt():
     agent = ExoAgent()
     assert "helpful and direct virtual assistant" in agent._get_system_prompt("generalist").lower()
     assert "senior domain specialist" in agent._get_system_prompt("specialist").lower()
-    assert "intelligent domain expert" in agent._get_system_prompt("hybrid").lower()
+    assert "senior domain specialist" in agent._get_system_prompt("hybrid").lower()
     assert "orchestrator agent" in agent._get_system_prompt("orchestrator").lower()
     
     # Test fallback to generalist
