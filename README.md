@@ -26,59 +26,67 @@ ExoModel is currently in **Beta (0.1.0)**. You can install it using pip:
 pip install exomodel
 ```
 
-*Ensure you have your environment variables configured: 
+*Ensure you have your environment variables configured in the .env file: 
  - LLM Key (e.g., `GOOGLE_API_KEY` or `OPENAI_API_KEY`).*
  - MY_LLM_MODEL (e.g., `gemini-2.5-flash` or `gpt-4o`).*
  - MY_EMBEDDING_MODEL (e.g., `gemini-embedding-001` or `text-embedding-3-small`).*
 
 ---
 
-## 🛠 Basic Usage
+## 🚀 Quick Start
 
-### 1. Define your Model
-Inherit from `ExoModel` to give your data structures "AI powers."
+### 1. Setup your Environment
+Install the package. 
 
-```python
-from exo_model import ExoModel
-from pydantic import Field
+```bash
+pip install exomodel
+```
+
+Configure your API keys in a `.env` file at the root of your project.
+
+```text
+# .env
+GOOGLE_API_KEY=your_key_here
+MY_LLM_MODEL=gemini-1.5-flash
+MY_EMBEDDING_MODEL=text-embedding-004
+```
+
+### 2\. Create a Knowledge Base
+
+Create a file named `proposal_rules.md`. This "grounds" your AI objects in real-world logic.
+
+```markdown
+# Proposal Rules
+- We only accept projects above $10,000.
+- Every proposal must include a 10% safety margin in the pricing.
+- We do not work with companies in the tobacco industry.
+```
+
+### 3\. Define and Run your Entity
+
+Inherit from `ExoModel` to give your data structures autonomous reasoning powers.
+
+```python hl_lines="3 8 11"
+from exomodel import ExoModel
 
 class Proposal(ExoModel):
-    client: str = Field(description="Legal name of the company")
-    business_challenge: str = Field(description="The main problem to solve")
-    solution: str = Field(description="AI Strategy, AI Program Execution, or AI Labs")
-    pricing: int = Field(default=0)
-
+    client: str = ""
+    budget: float = 0.0
+    
     @classmethod
     def get_rag_sources(cls):
-        return ["docs/proposal_rules.md"]
-```
+        # The object now 'knows' your specific business rules
+        return ["proposal_rules.md"]
 
-### 2. Interact via Prompts
-You can initialize an object directly with a prompt or update it later.
+# Initialize and populate the object from raw text
+p = Proposal(prompt="Draft a 50k proposal for Tesla")
 
-```python
-# Create and populate
-proposal = Proposal(prompt="Create a proposal for Tesla regarding a new AI Predictive Maintenance roadmap.")
+# print the object
+print(p.to_ui())
 
-# Analyze based on RAG rules
-analysis = proposal.run_analysis()
-print(analysis)
+# The object analyzes itself based on the 'proposal_rules.md'
+print(p.run_analysis()) 
 
-# Update a specific field
-proposal.update_field("pricing", "Based on the roadmap complexity, set a fair price.")
-```
-
-### 3. Manage Lists
-Use `ExoModelList` to handle multiple entities.
-
-```python
-from exomodel_list import ExoModelList
-
-tasks = ExoModelList(item_class=Proposal)
-tasks.create_list("Generate 3 different AI proposals for a retail company.")
-
-print(tasks.to_ui())
-print(tasks.to_csv())
 ```
 
 ---
