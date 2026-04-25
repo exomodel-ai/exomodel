@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import os
+import re
 import json
 import inspect
 import io
@@ -134,7 +135,98 @@ class ExoModel(BaseModel):
 
     def get_instance_json(self):
         """Returns the current instance data as JSON."""
-        return self.model_dump_json(indent=2)   
+        return self.model_dump_json(indent=2)
+
+    def _get_prompt_path(self, filename: str) -> str:
+        """Resolves the absolute path for a given prompt template file."""
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        return os.path.join(current_dir, "prompt", filename)
+
+    def _load_prompt_template(self, filename: str, **kwargs) -> str:
+        """
+        Loads a prompt template file and renders it with the given keyword arguments.
+
+        Raises:
+            FileNotFoundError: If the template file does not exist. This is an
+                unrecoverable configuration error — passing the error message as
+                a prompt to the LLM would produce nonsensical results.
+            KeyError: If a required placeholder in the template is missing from kwargs.
+        """
+        file_path = self._get_prompt_path(filename)
+
+        if not os.path.exists(file_path):
+            raise FileNotFoundError(
+                f"Prompt template not found: '{file_path}'. "
+                f"Ensure the 'prompt/' directory exists alongside exomodel.py "
+                f"and contains '{filename}'."
+            )
+
+        with open(file_path, 'r', encoding='utf-8') as f:
+            template = f.read()
+
+        try:
+            return template.format(**kwargs)
+        except KeyError as e:
+            raise KeyError(
+                f"Template '{filename}' requires placeholder {e} "
+                f"which was not provided. Supplied keys: {list(kwargs.keys())}"
+            ) from e
+
+    # -------------------------------------------------------------------------
+    # Private prompt builders — now use _load_prompt_template
+    # -------------------------------------------------------------------------
+
+    def __get_prompt_update_object(self, prompt: str) -> str:
+        return self._load_prompt_template(
+            "update_object.md",
+            entity_name=self.__class__.__name__,
+            prompt=prompt,
+            obj_fields_info=self.get_fields_info()
+        )
+
+    def __get_prompt_update_field(self, field_name: str, prompt: str) -> str:
+        return self._load_prompt_template(
+            "update_field.md",
+            field_name=field_name,
+            entity_name=self.__class__.__name__,
+            field_value=getattr(self, field_name),
+            prompt=prompt
+        )
+
+    def __get_prompt_run_object_prompt(self, prompt: str) -> str:
+        return self._load_prompt_template(
+            "run_object_prompt.md",
+            prompt=prompt,
+            entity_name=self.__class__.__name__,
+            json_schema=self.get_instance_json()
+        )
+
+    def __get_prompt_run_analysis(self) -> str:
+        return self._load_prompt_template(
+            "run_analysis.md",
+            entity_name=self.__class__.__name__,
+            json_schema=self.get_instance_json()
+        )
+
+    def __get_prompt_filling_instructions(self) -> str:
+        return self._load_prompt_template(
+            "filling_instructions.md",
+            entity_name=self.__class__.__name__,
+            fields_info=self.get_fields_metadata(self.__class__)
+        )
+
+    def __get_master_prompt(self, prompt: str) -> str:
+        return self._load_prompt_template(
+            "master_prompt.md",
+            entity_name=self.__class__.__name__,
+            prompt=prompt,
+            obj_fields_info=self.get_fields_info(),
+            tools_info=self.llm_tools
+        )
+
+    # -------------------------------------------------------------------------
+    # Public operations
+    # -------------------------------------------------------------------------
 
     def update_object(self, prompt: str) -> dict:
         """
@@ -152,9 +244,6 @@ class ExoModel(BaseModel):
         Returns:
             dict: A dictionary containing the fields that were successfully updated.
         """
-        import json
-        import re
-
         # 1. Prepare context and schema
         specialized_prompt = self.__get_prompt_update_object(prompt)
         extraction_schema = self.build_extraction_schema()
@@ -196,35 +285,7 @@ class ExoModel(BaseModel):
 
         except Exception as e:
             print(f"[ExoModel] Error synchronizing update: {e}")
-            # Log the raw output for debugging in development environments
-            if hasattr(self, '_debug') and self._debug:
-                print(f"[DEBUG] Raw output: {structured_output}")
-            return {}        
-
-    def update_object_old(self, prompt: str):
-        """Updates object fields using LLM Structured Output."""
-        specialized_prompt = self.__get_prompt_update_object(prompt)
-        extraction_schema = self.build_extraction_schema()
-        
-        structured_output = self.run_llm(
-            specialized_prompt, 
-            response_schema=extraction_schema, 
-            mode="hybrid"
-        )
-        
-        if not structured_output:
             return {}
-
-        try:
-            updates = structured_output.model_dump()        
-            cls_fields = type(self).model_fields 
-            for field_name, field_value in updates.items():
-                if field_name in cls_fields:
-                    setattr(self, field_name, field_value)
-            return updates
-        except Exception as e:
-            print(f"[ExoModel] Error processing update: {e}")
-            return {}  
 
     @classmethod
     def build_extraction_schema(cls):
@@ -259,28 +320,6 @@ class ExoModel(BaseModel):
 
         return create_model(f"{cls.__name__}Extraction", **fields_for_ai)
 
-    def __get_prompt_update_object(self, prompt: str):
-        fields_info = self.get_fields_info()
-        entity_name = self.__class__.__name__
-        file_path = self._get_prompt_path("update_object.md")
-
-        try:
-            with open(file_path, 'r', encoding='utf-8') as f:
-                template = f.read()
-            return template.format(entity_name=entity_name, prompt=prompt, obj_fields_info=fields_info)
-        except FileNotFoundError:
-            return f"Error: Prompt template {file_path} not found."   
-
-    def _get_prompt_path(self, filename: str) -> str:
-        """
-        Resolves the absolute path for a given prompt template file.
-        """
-        # Get the directory where exomodel.py is located
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        
-        # Build path: src/exomodel/prompt/{filename}
-        return os.path.join(current_dir, "prompt", filename) 
-
     def update_field(self, field_name: str, prompt: str):
         """Updates a specific field based on a prompt."""
         if field_name not in type(self).model_fields:
@@ -291,87 +330,26 @@ class ExoModel(BaseModel):
         setattr(self, field_name, result)
         return result      
 
-    def __get_prompt_update_field(self, field_name: str, prompt: str):
-        field_value = getattr(self, field_name)
-        entity_name = self.__class__.__name__
-        file_path = self._get_prompt_path("update_field.md")
-
-        try:
-            with open(file_path, 'r', encoding='utf-8') as f:
-                template = f.read()
-            return template.format(field_name=field_name, entity_name=entity_name, field_value=field_value, prompt=prompt)
-        except FileNotFoundError:
-            return f"Error: Prompt template {file_path} not found."   
-
     def run_object_prompt(self, prompt: str):
         """Executes a general prompt regarding the object state."""
         prompt_llm = self.__get_prompt_run_object_prompt(prompt)
-        return self.run_llm(prompt_llm, mode="hybrid")  
-
-    def __get_prompt_run_object_prompt(self, prompt: str):
-        entity_name = self.__class__.__name__
-        json_data = self.get_instance_json()
-        file_path = self._get_prompt_path("run_object_prompt.md")
-        
-        try:
-            with open(file_path, 'r', encoding='utf-8') as f:
-                template = f.read()
-            return template.format(prompt=prompt, entity_name=entity_name, json_schema=json_data)
-        except FileNotFoundError:
-            return f"Error: Prompt template {file_path} not found." 
+        return self.run_llm(prompt_llm, mode="hybrid")
 
     def run_analysis(self):
         """Performs a critical analysis of the object using RAG context."""
         prompt = self.__get_prompt_run_analysis()
         return self.run_llm(prompt, mode="specialist")
 
-    def __get_prompt_run_analysis(self):
-        entity_name = self.__class__.__name__
-        json_data = self.get_instance_json()
-        file_path = self._get_prompt_path("run_analysis.md")
-
-        try:
-            with open(file_path, 'r', encoding='utf-8') as f:
-                template = f.read()
-            return template.format(entity_name=entity_name, json_schema=json_data)
-        except FileNotFoundError:
-            return f"Error: Prompt template {file_path} not found."        
-
     def run_filling_instructions(self):
         """Retrieves filling guidelines and best practices."""
         prompt = self.__get_prompt_filling_instructions()
-        return self.run_llm(prompt, mode="specialist")  
-
-    def __get_prompt_filling_instructions(self):
-        entity_name = self.__class__.__name__
-        fields_info = self.get_fields_metadata(self.__class__)
-        file_path = self._get_prompt_path("filling_instructions.md")
-
-        try:
-            with open(file_path, 'r', encoding='utf-8') as f:
-                template = f.read()
-            return template.format(entity_name=entity_name, fields_info=fields_info)
-        except FileNotFoundError:
-            return f"Error: Prompt template {file_path} not found." 
+        return self.run_llm(prompt, mode="specialist")
 
     def master_prompt(self, prompt: str):
         """The Orchestrator prompt capable of executing other object tools."""
         llm_prompt = self.__get_master_prompt(prompt)
         print(f"[ExoModel] Master Prompt Initialized\n")
         return self.run_llm(prompt=llm_prompt, mode="orchestrator", use_tools=True)
-
-    def __get_master_prompt(self, prompt: str):
-        fields_info = self.get_fields_info()
-        entity_name = self.__class__.__name__
-        file_path = self._get_prompt_path("master_prompt.md")
-        tools_info = self.llm_tools
-
-        try:
-            with open(file_path, 'r', encoding='utf-8') as f:
-                template = f.read()
-            return template.format(entity_name=entity_name, prompt=prompt, obj_fields_info=fields_info, tools_info=tools_info)
-        except FileNotFoundError:
-            return f"Error: Prompt template {file_path} not found."  
 
     def run_llm(self, prompt: str, response_schema: Any = None, mode: str = "generalist", use_tools: bool = False):  
         """Unified interface with the ExoAgent."""
@@ -395,7 +373,7 @@ class ExoModel(BaseModel):
                 continue
             value = getattr(self, name)
             info.append(f"- {name}: {value}")
-        return "\n".join(info)     
+        return "\n".join(info)
 
     @staticmethod
     def get_fields_metadata(model_class):

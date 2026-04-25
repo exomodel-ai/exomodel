@@ -34,6 +34,10 @@ class ExoModelList(ExoModel, Generic[T]):
         :param item_class: The ExoModel class that this list will contain.
         :param prompt: Optional prompt to immediately populate the list.
         """
+        # prompt is intentionally NOT passed to super().__init__() because
+        # _item_class must be set before any LLM call. Passing prompt to super
+        # would trigger update_object() before _item_class is defined, causing
+        # an AttributeError. We handle prompt manually after setup is complete.
         super().__init__(**data)
         self._item_class = item_class
         
@@ -47,24 +51,19 @@ class ExoModelList(ExoModel, Generic[T]):
         """
         Dynamically constructs a list schema (envelope) containing only 
         the allowed fields from the item class for LLM extraction.
+
+        Reuses build_extraction_schema() from ExoModel to ensure consistent
+        filtering of complex types (nested ExoModels, non-primitive lists, etc.).
         """
-        # Filter fields that are not excluded
-        fields_to_include = {
-            name: (info.annotation, info)
-            for name, info in self._item_class.model_fields.items()
-            if not info.exclude
-        }
+        # Reuse parent's extraction schema — already filters nested ExoModels,
+        # ListExoModel containers, and lists of non-primitive types correctly.
+        ItemSchema = self._item_class.build_extraction_schema()
 
-        # Create the individual item schema (cleaned from technical fields)
-        item_schema_name = f"{self._item_class.__name__}Extraction"
-        ItemSchema = create_model(item_schema_name, **fields_to_include)
-
-        # Create the list container that the LLM will fill
         container_name = f"{self._item_class.__name__}ListContainer"
         return create_model(
             container_name,
             items=(List[ItemSchema], Field(
-                default_factory=list, 
+                default_factory=list,
                 description=f"A list of {self._item_class.__name__} objects"
             ))
         )
@@ -117,24 +116,22 @@ class ExoModelList(ExoModel, Generic[T]):
     def _get_prompt_create_list(self, prompt: str) -> str:
         """Constructs the prompt for the LLM to generate the list."""
         entity_name = self._item_class.__name__
-        
-        # Generate field descriptions for the LLM context
-        field_descriptions = []
-        for name, field in self._item_class.model_fields.items():
-            if not field.exclude:
-                desc = field.description or "No description provided."
-                field_descriptions.append(f"- {name}: {desc}")
-        
-        fields_info = "\n".join(field_descriptions)
-        
-        # Note: In a final open-source version, this should move to a YAML prompt library
-        file_path = self._get_prompt_path("create_list.md")
-        try:
-            with open(file_path, 'r', encoding='utf-8') as f:
-                template = f.read()
-            return template.format(entity_name=entity_name, prompt=prompt, obj_fields_info=fields_info)
-        except FileNotFoundError:
-            return f"Create a list of {entity_name} based on: {prompt}. Fields: {fields_info}"
+
+        fields_info = "\n".join(
+            f"- {name}: {field.description or 'No description provided.'}"
+            for name, field in self._item_class.model_fields.items()
+            if not field.exclude
+        )
+
+        # Uses _load_prompt_template() from ExoModel — raises FileNotFoundError
+        # explicitly if the template is missing, instead of silently falling back
+        # to a degraded prompt that would produce unpredictable LLM output.
+        return self._load_prompt_template(
+            "create_list.md",
+            entity_name=entity_name,
+            prompt=prompt,
+            obj_fields_info=fields_info
+        )
 
     def to_csv(self, delimiter: str = ";") -> str:
         """Converts the entire list to a single CSV string with headers."""
@@ -162,7 +159,6 @@ class ExoModelList(ExoModel, Generic[T]):
         else:
             for i, item in enumerate(self.items, 1):
                 lines.append(f"🔹 <b>ITEM #{i}</b>")
-                # Reuse the logic from SmartBaseModel but indented
                 for name, field in item.model_fields.items():
                     if field.exclude: continue
                     val = getattr(item, name, "---")

@@ -1,5 +1,5 @@
 import pytest
-from exomodel.exomodel import ExoModel
+from exomodel.exomodel_old import ExoModel
 
 class Proposal(ExoModel):
     @classmethod
@@ -137,6 +137,6 @@ def test_run_object_prompt():
     assert response == "RetailFlow"
 
 if __name__ == "__main__":
-    test_proposal_creation()
+    test_run_object_prompt()
 
     
