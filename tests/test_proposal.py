@@ -1,5 +1,5 @@
 import pytest
-from exomodel.exomodel_old import ExoModel
+from exomodel.exomodel import ExoModel
 
 class Proposal(ExoModel):
     @classmethod

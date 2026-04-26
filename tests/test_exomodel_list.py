@@ -14,7 +14,7 @@
 
 import pytest
 from unittest.mock import MagicMock, patch
-from exomodel.exomodel_old import ExoModel
+from exomodel.exomodel import ExoModel
 from exomodel.exomodel_list import ExoModelList
 
 class DummyItem(ExoModel):
