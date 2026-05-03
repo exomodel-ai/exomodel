@@ -12,15 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-__version__ = "0.1.3-beta"
+__version__ = "1.0.0"
 
 from .exoagent import ExoAgent
-from .exomodel import ExoModel
+from .exomodel import ExoModel, llm_action, llm_function
 from .exomodel_list import ExoModelList
-
 
 __all__ = [
     "ExoAgent",
     "ExoModel",
-    "ExoModelList"
+    "ExoModelList",
+    "llm_function",
+    "llm_action",
 ]

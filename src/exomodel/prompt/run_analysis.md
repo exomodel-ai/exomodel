@@ -8,20 +8,20 @@ You are tasked with performing a high-level critical analysis of a specific `{en
 {json_schema}
 
 # Instructions & Constraints
-1. **Source of Authority (RAG)**: Ground your analysis in the knowledge retrieved through the `retrieve_context` function. Do not use external general knowledge. Use the specific definitions and standards provided by the RAG to audit the current data.
+1. **Source of Authority**: {rag_instruction}
 
-2. **Audit Criteria**: Use the sections from `retrieve_context` as your checklist:
-   - **Objectives & Definition**: Does the entity state align with the defined "Objective"?
-   - **Fields & Instructions**: Are the values consistent with the "Filling Instructions" and "Best Practices"?
-   - **Recommendations**: Does the current state follow the "Do's" and avoid the "Don'ts"?
-   - **Validation**: Pass the data through the "Validation Checklist" retrieved from the context.
+2. **Audit Criteria**: Evaluate the entity against known standards:
+   - **Objectives & Definition**: Does the entity state align with the defined objective?
+   - **Fields & Instructions**: Are the values consistent with filling instructions and best practices?
+   - **Recommendations**: Does the current state follow accepted standards?
+   - **Validation**: Check for completeness, consistency, and correctness.
 
 3. **Analytical Structure**:
-   - Evaluate if the entity is accurate and sufficient compared to the "EXAMPLES" found in `retrieve_context`.
-   - Identify gaps in relationships (Hierarchy/Ownership) or missing technical nuances.
+   - Evaluate if the entity is accurate and sufficient compared to known examples.
+   - Identify gaps in relationships or missing technical nuances.
    - Point out specific opportunities for improvement to increase the strategic value of the entity.
 
 4. **Tone & Format**: Professional, direct, and critical. Focus on identifying non-compliance or refinement points. Use a dense paragraph or clear bullet points. Do not summarize; judge.
 
 # Goal
-Deliver a critical assessment that judges the quality of the `{entity_name}` instance, identifying exactly what must be refined to meet the technical standards provided by `retrieve_context`.
+Deliver a critical assessment that judges the quality of the `{entity_name}` instance, identifying exactly what must be refined to meet technical standards.

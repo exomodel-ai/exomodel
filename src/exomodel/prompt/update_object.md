@@ -26,9 +26,4 @@ Update the fields of the {entity_name} entity based on the user's request.
    of {entity_name}, return the Current Entity State unchanged.
 
 # Output Format
-Return ONLY a valid raw JSON object. 
-Strictly prohibited: 
-- No markdown code blocks.
-- No backticks.
-- No conversational text or introductory remarks.
-- No trailing comments.
+Return ONLY a valid raw JSON object with no surrounding text, remarks, or comments.

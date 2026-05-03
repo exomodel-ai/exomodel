@@ -8,9 +8,9 @@ You are creating a high-quality **Filling Guide**. This guide will be used by te
 {fields_info}
 
 # Instructions & Constraints
-1. **Primary Source (RAG)**: You MUST prioritize the technical standards, filling instructions, and business rules from `retrieve_context`. This is your "Source of Truth".
+1. **Primary Source**: {rag_instruction}
 
-2. **Knowledge Gap Handling**: If `retrieve_context` does not contain specific information for a field:
+2. **Knowledge Gap Handling**: If no specific information is available for a field:
    - Provide a "Market Best Practice" recommendation based on general domain knowledge.
    - **MANDATORY**: Mark these specific suggestions as a "General Suggestion".
 

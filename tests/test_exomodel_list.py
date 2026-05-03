@@ -12,10 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import pytest
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
+
 from exomodel.exomodel import ExoModel
 from exomodel.exomodel_list import ExoModelList
+
 
 class DummyItem(ExoModel):
     """A dummy item for testing ExoModelList."""
@@ -52,7 +53,7 @@ def test_exomodel_list_manual_insertion():
 
 def test_exomodel_list_create_list():
     """Test populating the list using a mocked LLM response.
-    
+
     Both _get_prompt_create_list and run_llm are mocked because:
     - _get_prompt_create_list requires prompt template files on disk
     - run_llm makes real LLM API calls
