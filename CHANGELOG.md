@@ -6,6 +6,21 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and
 
 ---
 
+## [1.0.1] — 2026-05-03
+
+### Fixed
+
+- **`USER_AGENT` env var set after `WebBaseLoader` import** — `os.environ.setdefault("USER_AGENT", "ExoAgentApp/1.0")` moved to before the `langchain_community` imports in `exoagent.py`. LangChain checks the variable at import time, so the previous placement always triggered the warning.
+- **`master_prompt` unavailable on `ExoModelList`** — the 1.0.0 refactor that decoupled `ExoModelList` from `ExoModel` removed `master_prompt` as a side effect. Restored by adding: default `@llm_function` tools (`call_create_list`, `call_update_list`); `llm_tools` property with reflection + caching; `use_tools` parameter on `run_llm`; `_get_master_prompt` builder; and `master_prompt` public method — mirroring the `ExoModel` pattern.
+- **Installation instructions failed in zsh** — `pip install exomodel[extra]` commands in `README.md` now use quotes (`pip install "exomodel[extra]"`). zsh interprets bare square brackets as glob patterns.
+
+### Tests
+
+- **`test_exomodel_list_llm_tools`** — verifies that `call_create_list` and `call_update_list` are discovered by the `llm_tools` property.
+- **`test_exomodel_list_master_prompt`** — verifies that `master_prompt` renders the prompt, calls `run_llm` with `mode="orchestrator"` and `use_tools=True`, and passes the return value through unchanged.
+
+---
+
 ## [1.0.0] — 2026-05-03
 
 First stable release. All correctness blockers from the beta period have been resolved, the public API surface is frozen, and the test suite has been expanded with unit, integration, and RAG pipeline coverage.

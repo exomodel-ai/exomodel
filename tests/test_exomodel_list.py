@@ -119,6 +119,40 @@ def test_exomodel_list_to_csv():
     assert "Beta;20" in lines[2]
 
 
+def test_exomodel_list_llm_tools():
+    """Test that default @llm_function tools are discovered on ExoModelList."""
+    model_list = ExoModelList(item_class=DummyItem)
+    tool_names = {t.name for t in model_list.llm_tools}
+    assert "call_create_list" in tool_names
+    assert "call_update_list" in tool_names
+
+
+def test_exomodel_list_master_prompt():
+    """Test that master_prompt routes to the orchestrator with tools enabled.
+
+    Mocks _get_master_prompt and run_llm so no file I/O or LLM calls happen.
+    Verifies that run_llm is called with mode='orchestrator' and use_tools=True,
+    and that the return value is passed through unchanged.
+    """
+    model_list = ExoModelList(item_class=DummyItem)
+    model_list.items = [DummyItem(name="Apple", value=3)]
+
+    expected_response = "List updated successfully."
+
+    with patch.object(ExoModelList, "_get_master_prompt", return_value=MOCK_PROMPT) as mock_get_prompt, \
+         patch.object(ExoModelList, "run_llm", return_value=expected_response) as mock_run_llm:
+
+        result = model_list.master_prompt("Add two more apples")
+
+        mock_get_prompt.assert_called_once_with("Add two more apples")
+        mock_run_llm.assert_called_once_with(
+            prompt=MOCK_PROMPT,
+            mode="orchestrator",
+            use_tools=True,
+        )
+        assert result == expected_response
+
+
 def test_exomodel_list_repr():
     """Test the string and representation methods."""
     model_list = ExoModelList(item_class=DummyItem)

@@ -42,11 +42,11 @@ While traditional agent frameworks focus on chat, ExoModel focuses on the **Busi
 ExoModel 1.0.0 is LLM-agnostic. Install only the provider package you need:
 
 ```bash
-pip install exomodel[google]      # Gemini (default)
-pip install exomodel[anthropic]   # Claude
-pip install exomodel[openai]      # OpenAI / Azure OpenAI
-pip install exomodel[cohere]      # Cohere
-pip install exomodel[all]         # all providers
+pip install "exomodel[google]"      # Gemini (default)
+pip install "exomodel[anthropic]"   # Claude
+pip install "exomodel[openai]"      # OpenAI / Azure OpenAI
+pip install "exomodel[cohere]"      # Cohere
+pip install "exomodel[all]"         # all providers
 ```
 
 Then create a `.env` file at the root of your project:

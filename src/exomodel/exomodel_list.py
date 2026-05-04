@@ -18,7 +18,7 @@ from typing import Any, Generic, Optional, TypeVar
 from pydantic import BaseModel, Field, PrivateAttr, create_model
 
 from .exoagent import ExoAgent
-from .exomodel import ExoModel
+from .exomodel import ExoModel, llm_function
 
 T = TypeVar('T', bound='ExoModel')
 
@@ -48,6 +48,7 @@ class ExoModelList(BaseModel, Generic[T]):
     _item_class: type[T] = PrivateAttr()
     _rag_sources: list[str] = PrivateAttr(default_factory=list)
     _exo_agent: Optional[ExoAgent] = PrivateAttr(default=None)
+    _llm_tools_cache: Optional[list[Any]] = PrivateAttr(default=None)
 
     @classmethod
     def __class_getitem__(cls, item):
@@ -92,8 +93,56 @@ class ExoModelList(BaseModel, Generic[T]):
             self.create_list(prompt)
 
     # -------------------------------------------------------------------------
+    # Default orchestrator tools
+    # -------------------------------------------------------------------------
+
+    @llm_function
+    def call_create_list(self, prompt: str):
+        """
+        Use this tool when the user wants to generate or replace the entire list
+        from a natural-language description.
+        MANDATORY: Pass the user's original request as the 'prompt' argument.
+        """
+        return self.create_list(prompt)
+
+    @llm_function
+    def call_update_list(self, prompt: str):
+        """
+        Use this tool when the user wants to modify, add, remove, or adjust
+        items in the existing list based on an instruction.
+        MANDATORY: Pass the user's original request as the 'prompt' argument.
+        """
+        return self.update_list(prompt)
+
+    # -------------------------------------------------------------------------
     # Agent plumbing (composition — mirrors ExoModel's implementation)
     # -------------------------------------------------------------------------
+
+    @property
+    def llm_tools(self):
+        """Returns all `@llm_function` methods on this instance as LangChain `StructuredTool` objects."""
+        if self._llm_tools_cache is not None:
+            return self._llm_tools_cache
+
+        from langchain_core.tools import StructuredTool
+        tools = []
+        for attr_name in dir(type(self)):
+            if attr_name.startswith('_') or attr_name.startswith('model_'):
+                continue
+            try:
+                method = getattr(self, attr_name)
+                if hasattr(method, "_is_llm_function"):
+                    tools.append(StructuredTool.from_function(
+                        func=method,
+                        name=attr_name,
+                        description=method.__doc__ or f"Executes {attr_name}",
+                        return_direct=True
+                    ))
+            except Exception:
+                continue
+
+        self._llm_tools_cache = tools
+        return self._llm_tools_cache
 
     def add_rag_source(self, rag_source: str):
         """Appends a RAG source and forwards it to the active agent if one exists.
@@ -135,13 +184,42 @@ class ExoModelList(BaseModel, Generic[T]):
                 f"which was not provided. Supplied keys: {list(kwargs.keys())}"
             ) from e
 
-    def run_llm(self, prompt: str, response_schema: Any = None, mode: str = "generalist"):
+    def run_llm(self, prompt: str, response_schema: Any = None, mode: str = "generalist",
+                use_tools: bool = False):
         """Sends a prompt to the underlying `ExoAgent`, lazily creating it on first call."""
         if self._exo_agent is None:
             self._exo_agent = ExoAgent()
             if self._rag_sources:
                 self._exo_agent.add_rag_sources(self._rag_sources)
+
+        if use_tools:
+            self._exo_agent.set_external_tools(self.llm_tools)
+        else:
+            self._exo_agent.set_external_tools([])
+
         return self._exo_agent.run(prompt=prompt, response_schema=response_schema, mode=mode)
+
+    def _get_master_prompt(self, prompt: str) -> str:
+        tools_info = "\n".join(
+            f"- {t.name}: {t.description}" for t in self.llm_tools
+        )
+        current_state = self.to_csv() or "(empty list)"
+        return self._load_prompt_template(
+            "master_prompt.md",
+            entity_name=f"{self._item_class.__name__}List",
+            prompt=prompt,
+            obj_fields_info=current_state,
+            tools_info=tools_info
+        )
+
+    def master_prompt(self, prompt: str):
+        """Routes a user request to the appropriate `@llm_function` tool via an orchestrator agent.
+
+        Use this as the single entry point for chat-style interactions where the action
+        (create, update, or a custom tool) is not known in advance.
+        """
+        llm_prompt = self._get_master_prompt(prompt)
+        return self.run_llm(prompt=llm_prompt, mode="orchestrator", use_tools=True)
 
     # -------------------------------------------------------------------------
     # Schema helpers

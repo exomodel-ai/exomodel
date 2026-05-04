@@ -18,6 +18,9 @@ import os
 from datetime import datetime
 from typing import Any, Optional
 
+# Must be set before WebBaseLoader is imported — LangChain checks at import time.
+os.environ.setdefault("USER_AGENT", "ExoAgentApp/1.0")
+
 import html2text
 import requests
 from dotenv import load_dotenv
@@ -32,9 +35,6 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 load_dotenv()
 
 logger = logging.getLogger(__name__)
-
-# Must be set before WebBaseLoader makes its first request.
-os.environ["USER_AGENT"] = "ExoAgentApp/1.0"
 
 class ExoAgent:
     """LLM engine used by `ExoModel` — manages conversation context, RAG, and tool routing.
