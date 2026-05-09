@@ -4,8 +4,11 @@
 [![PyPI version](https://img.shields.io/pypi/v/exomodel?color=blue)](https://pypi.org/project/exomodel/)
 [![License](https://img.shields.io/github/license/exomodel-ai/exomodel)](https://github.com/exomodel-ai/exomodel/blob/main/LICENSE)
 
+> **Stop building AI around your data. With ExoModel, your data becomes the AI.**
+
 📖 **Official Documentation:** [https://exomodel.ai](https://exomodel.ai)  
-📦 **GitHub Repository:** [https://github.com/exomodel-ai/exomodel](https://github.com/exomodel-ai/exomodel)
+📦 **GitHub Repository:** [https://github.com/exomodel-ai/exomodel](https://github.com/exomodel-ai/exomodel)  
+📬 **Contact:** [contact@exomodel.ai](mailto:contact@exomodel.ai)
 
 ---
 
@@ -23,6 +26,24 @@ While traditional agent frameworks focus on chat, ExoModel focuses on the **Busi
 | Fragile manual prompting | Type-safe field mapping — the schema is the prompt |
 | Disconnected RAG pipelines | Documents attached directly to the class, consulted at runtime |
 | Complex JSON parsing | Guaranteed schema-validated outputs via Pydantic |
+
+---
+
+## 🤔 Why not just use LangChain directly?
+
+LangChain is great — ExoModel is actually built on top of it. But there's a gap between "I have an LLM" and "I have a working business application", and that's exactly what ExoModel fills.
+
+**1. LangChain thinks in pipelines. Your business thinks in objects.**
+
+When you model a `Proposal`, a `LeadContact`, or an `AuditReport`, you're thinking in entities — not chains. LangChain makes you wrap your data around the AI. ExoModel puts the AI inside the data, where it belongs.
+
+**2. You still have to write all the glue code.**
+
+With raw LangChain, you manage prompt templates, output parsers, schema validation, RAG retrieval, and tool registration — separately, by hand, for every entity. ExoModel handles all of that by convention. Define the schema, attach the documents, and the object knows what to do.
+
+**3. The output is still just text.**
+
+LangChain returns strings. Your application needs structured, validated, typed objects it can save to a database, send to an API, or render in a UI. ExoModel's output is always a Pydantic model — guaranteed schema, no parsing, no surprises.
 
 ---
 
