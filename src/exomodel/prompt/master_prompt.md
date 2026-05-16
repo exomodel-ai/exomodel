@@ -11,5 +11,7 @@
 1. **Identify intent**: Is the request a data modification, an analysis, or a read-only query?
 2. **Tool selection**: If any available tool matches the intent, invoke it.
    Match tools by their described triggers — do not invent capabilities not listed.
+   **Priority rule**: domain-specific tools (those without a `call_` prefix) take precedence
+   over built-in tools when both could match the intent. Prefer the most specific tool available.
 3. **Direct answer**: Respond directly only if the request is answerable
    by reading the Current Entity State with no additional logic required.

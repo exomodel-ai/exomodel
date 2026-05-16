@@ -285,11 +285,20 @@ class ExoModelList(BaseModel, Generic[T]):
         has full context before regenerating. Delegates to ``create_list`` when the
         list is empty, since there is nothing to serialise.
 
-        Note: the LLM regenerates the entire list on each call. For large lists this
-        can be expensive — see EVOLUTION_PLAN item 2.5 for the planned targeted-update strategy.
+        Raises ``ValueError`` when the list exceeds 20 items — update items individually
+        via ``update_object()`` in that case. See EVOLUTION_PLAN item 2.5 for the planned
+        targeted-update strategy.
         """
         if not self.items:
             return self.create_list(prompt)
+
+        MAX_ITEMS_FOR_UPDATE = 30
+        if len(self.items) > MAX_ITEMS_FOR_UPDATE:
+            raise ValueError(
+                f"update_list() supports up to {MAX_ITEMS_FOR_UPDATE} items. "
+                f"This list has {len(self.items)}. "
+                "Update items individually using update_object() on each instance."
+            )
 
         current_state_csv = self.to_csv()
         evolution_prompt = (

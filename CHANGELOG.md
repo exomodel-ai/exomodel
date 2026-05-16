@@ -6,6 +6,28 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and
 
 ---
 
+## [1.0.2] — 2026-05-16
+
+### Fixed
+
+- **RAG score threshold too restrictive** — `SCORE_THRESHOLD` in `exoagent.py` lowered from `0.75` to `0.5`. Short documents (e.g. a business-rules markdown file) were generating cosine similarity scores below 0.75 against long analytical prompts, causing `run_analysis()` and other specialist-mode calls to always return "No information found in the knowledge base for this query." even when the knowledge base was correctly loaded.
+
+- **Orchestrator mode incorrectly fell back to generalist without RAG** — the mode fallback condition in `_init_agent` applied to every non-generalist mode, including `orchestrator`. Since `orchestrator` routes to `@llm_function` tools — not to RAG — it should never be downgraded due to missing RAG sources. Fixed by separating the condition: `specialist` and `hybrid` fall back to `generalist` when no RAG tools are available; `orchestrator` falls back only when there are no tools at all (neither RAG nor `@llm_function`).
+
+- **`master_prompt.md` lacked conflict-resolution rule between tool types** — added an explicit priority rule to the routing instructions: domain-specific tools (those without a `call_` prefix) take precedence over built-in tools when both could match the user's intent. This prevents the orchestrator from defaulting to `call_run_object_analysis` when a more specific `@llm_function` method is available.
+
+### Added
+
+- **`update_list` item limit guard** — `update_list()` now raises `ValueError` when the list exceeds 30 items. Since the method regenerates the entire list from a CSV snapshot on every call, large lists risk exceeding LLM context limits and producing inconsistent updates. The error message instructs users to apply targeted updates via `update_object()` on individual instances.
+
+- **Google Colab quickstart notebook** — `examples/quickstart.ipynb` demonstrates the four core capabilities end-to-end: object creation from natural language, RAG grounding with a local rules document, `@llm_function` orchestration via `master_prompt`, and bulk collection management with `ExoModelList`. Includes setup instructions for users new to Colab.
+
+### Tests
+
+- **`update_list` limit guard** — 4 new tests in `test_exomodel_list.py`: raises `ValueError` at 31 items with the correct message; error message includes the actual item count; does not raise at exactly 30 items; empty list delegates to `create_list` without raising.
+
+---
+
 ## [1.0.1] — 2026-05-03
 
 ### Fixed

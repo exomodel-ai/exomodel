@@ -1,10 +1,9 @@
 # 🌌 ExoModel AI
-### The Object-Oriented Framework for Agentic AI
+### Your Python objects, autonomous.
+### Describe what you want — the object thinks, acts, and responds.
 
 [![PyPI version](https://img.shields.io/pypi/v/exomodel?color=blue)](https://pypi.org/project/exomodel/)
 [![License](https://img.shields.io/github/license/exomodel-ai/exomodel)](https://github.com/exomodel-ai/exomodel/blob/main/LICENSE)
-
-> **Stop building AI around your data. With ExoModel, your data becomes the AI.**
 
 📖 **Official Documentation:** [https://exomodel.ai](https://exomodel.ai)  
 📦 **GitHub Repository:** [https://github.com/exomodel-ai/exomodel](https://github.com/exomodel-ai/exomodel)  
@@ -12,20 +11,26 @@
 
 ---
 
-**ExoModel** brings AI capabilities directly into your data models. Instead of building prompt pipelines around your objects, your objects become the agents — they populate themselves from natural language, consult their own documents via RAG, and validate their state against business rules. Built on top of LangChain and Pydantic.
+Your domain objects already know how to do things.  
+Making them understand a natural language instruction shouldn't require  
+adapters, intent routers, and prompt templates written by hand.
+
+ExoModel bridges natural language intent and object behavior — so your domain objects can understand instructions, call their own methods, and respond with guaranteed structure. No glue code. No rewrites.
+
+---
+
+**Install now:** `pip install exomodel`
 
 ---
 
 ## ⚡ Why ExoModel?
 
-While traditional agent frameworks focus on chat, ExoModel focuses on the **Business Entity**. It brings type safety and structure to the chaotic world of LLMs.
-
-| Traditional AI Apps | With ExoModel |
+| Traditional approach | With ExoModel |
 | :--- | :--- |
-| Passive data models | Models that populate and update themselves from natural language |
-| Fragile manual prompting | Type-safe field mapping — the schema is the prompt |
-| Disconnected RAG pipelines | Documents attached directly to the class, consulted at runtime |
-| Complex JSON parsing | Guaranteed schema-validated outputs via Pydantic |
+| Write adapters and parsers before every feature | Objects understand instructions directly — no translation layer |
+| Map intent to methods by hand (`if intent == X`) | Objects discover and call their own methods based on intent |
+| Glue code buries your domain logic | Domain code stays domain code |
+| Tied to one LLM provider | Swap providers without touching business logic |
 
 ---
 
@@ -35,7 +40,7 @@ LangChain is great — ExoModel is actually built on top of it. But there's a ga
 
 **1. LangChain thinks in pipelines. Your business thinks in objects.**
 
-When you model a `Proposal`, a `LeadContact`, or an `AuditReport`, you're thinking in entities — not chains. LangChain makes you wrap your data around the AI. ExoModel puts the AI inside the data, where it belongs.
+When you model a `Proposal`, a `LeadContact`, or an `AuditReport`, you're thinking in entities — not chains. LangChain makes you wrap your objects around the AI. ExoModel puts the AI inside the objects, where it belongs.
 
 **2. You still have to write all the glue code.**
 
@@ -43,24 +48,24 @@ With raw LangChain, you manage prompt templates, output parsers, schema validati
 
 **3. The output is still just text.**
 
-LangChain returns strings. Your application needs structured, validated, typed objects it can save to a database, send to an API, or render in a UI. ExoModel's output is always a Pydantic model — guaranteed schema, no parsing, no surprises.
+LangChain returns strings. Your application needs structured, validated, typed objects that can act — objects you can save to a database, send to an API, render in a UI, or use to trigger further methods. ExoModel's output is always a live Pydantic object — guaranteed schema, no parsing, ready to do work.
 
 ---
 
 ## 🔥 Core Features
 
-- **🧠 Smart CRUD** — Create and update class instances using natural language. ExoModel understands intent and maps it to specific schema fields.
-- **📚 Native RAG Grounding** — Attach PDFs, URLs, or text files directly to your class. The object uses this "brain" to validate its own state against business rules.
-- **🤖 ExoAgent Orchestration** — A centralized engine that manages tool routing and persona switching (`generalist`, `specialist`, `hybrid`, `orchestrator`) to optimize accuracy and cost.
-- **🔌 API-First Design** — Transform messy human input into the strict JSON schemas required by your existing APIs and services.
-- **⚙️ Agentic Tools with `@llm_function`** — Decorate any method with `@llm_function` to expose it as an agentic tool. The agent discovers and calls it autonomously — no manual tool registration required.
-- **📊 Fluent List Management** — Handle collections of entities with `ExoModelList`, enabling bulk LLM generation and CSV/UI exports in a single call.
+- **🧠 Natural Language Updates** — Give objects instructions in plain English — they update their own fields with guaranteed structure. No parsers, no manual mapping.
+- **📚 Native RAG Grounding** — Ground your objects in real documents — attach PDFs, URLs, or text files and the object reasons within your actual business context.
+- **🤖 ExoAgent Orchestration** — Let objects coordinate without writing routing logic — ExoAgent reads intent and decides which method or tool to invoke, not `if/else`.
+- **🔌 Schema-Validated Output** — Feed raw human input, get back schema-validated output — ready for your APIs, databases, or UI. No parsing step.
+- **⚙️ Agentic Tools with `@llm_function`** — Expose any method as an agent tool with one decorator — ExoAgent discovers and calls it autonomously. No registration, no wiring.
+- **📊 Collection Operations** — Operate on entire collections in one LLM call — generate, update, and export lists of objects without looping manually.
 
 ---
 
 ## 📦 Installation
 
-ExoModel 1.0.0 is LLM-agnostic. Install only the provider package you need:
+ExoModel is LLM-agnostic. Install only the provider package you need:
 
 ```bash
 pip install "exomodel[google]"      # Gemini (default)
@@ -82,20 +87,15 @@ GOOGLE_API_KEY=your-key-here
 
 ## 🚀 Quick Start
 
-### 1. Create a Knowledge Base
+Three steps. No boilerplate.
 
-Create a file named `proposal_rules.md`. This grounds your AI objects in real-world business logic.
+### Step 1 — Install
 
-```markdown
-# Proposal Rules
-- We only accept projects above $10,000.
-- Every proposal must include a 10% safety margin in the pricing.
-- We do not work with companies in the tobacco industry.
+```bash
+pip install "exomodel[google]"
 ```
 
-### 2. Define and Run your Entity
-
-Inherit from `ExoModel` to give your data structures autonomous reasoning powers.
+### Step 2 — Inherit
 
 ```python
 from exomodel import ExoModel
@@ -103,31 +103,62 @@ from exomodel import ExoModel
 class Proposal(ExoModel):
     client: str = ""
     budget: float = 0.0
+    flagged_for_legal: bool = False
+
+    def flag_for_review(self):
+        self.flagged_for_legal = True
 
     @classmethod
     def get_rag_sources(cls):
-        # The object now 'knows' your specific business rules
         return ["proposal_rules.md"]
+```
 
-# Populate the object from raw natural language
+### Step 3 — Instruct
+
+```python
+# The object updates fields and calls the right method — from one instruction
 p = Proposal.create("Draft a 50k proposal for Tesla")
+p.update("apply the 10% safety margin and flag it for legal review")
+# → budget updated, flag_for_review() called — no if/else, no manual routing
 
-# Display a formatted summary
 print(p.to_ui())
 
-# The object analyzes itself against proposal_rules.md
+# The object checks itself against proposal_rules.md
 print(p.run_analysis())
+```
+
+The `@llm_function` decorator makes any method callable by the agent. Point it at a rules document and the object validates itself — no extra code.
+
+```python
+from exomodel import ExoModel, llm_function
+
+class LeadContact(ExoModel):
+    name: str = ""
+    status: str = "new"
+    score: int = 0
+
+    @llm_function
+    def qualify(self):
+        """Qualify this lead based on company size and budget signals."""
+        self.status = "qualified"
+
+    @llm_function
+    def disqualify(self, reason: str):
+        """Mark this lead as disqualified and record why."""
+        self.status = f"disqualified: {reason}"
+
+lead = LeadContact.create("Sarah from Acme Corp, mentioned $200k budget")
+lead.master_prompt("Evaluate this lead and take the right action")
+# → qualify() or disqualify() called autonomously based on context
 ```
 
 ---
 
 ## 🛠 Architecture
 
-ExoModel is built to be modular, scalable, and provider-agnostic.
-
 | Class | Role |
 | :--- | :--- |
-| **`ExoModel`** | The intelligent data foundation — schema-driven, AI-powered, RAG-aware. Subclass this to define your entities. |
+| **`ExoModel`** | The intelligent object foundation — schema-driven, AI-powered, RAG-aware. Subclass this to define your entities. |
 | **`ExoAgent`** | The reasoning engine that routes tool calls, manages LLM context, and processes RAG sources. Used internally by `ExoModel`; also available for direct use. |
 | **`ExoModelList[T]`** | Typed collection for bulk generation, updating, and export of `ExoModel` instances in a single LLM call. |
 | **`@llm_function`** | Decorator that turns any method into an agentic tool, discoverable and callable by `ExoAgent` at runtime via `master_prompt`. |
@@ -136,9 +167,9 @@ ExoModel is built to be modular, scalable, and provider-agnostic.
 
 ## 🎯 Use Cases
 
-- **🤝 Consultative Apps** — Build AI advisors that guide users through complex processes (insurance claims, financial planning) by populating structured models in real time.
-- **🔌 Agentic Middleware** — Bridge human language and rigid backends. Ensure every LLM output fits your API's exact specifications before it hits the wire.
-- **📊 Sales & CRM Automation** — Draft professional proposals, calculate pricing based on business rules, and update lead status autonomously.
+- **🤝 Consultative Apps** — Build AI advisors that guide users through complex processes (insurance claims, financial planning) by populating structured objects in real time.
+- **🔌 Agentic Middleware** — Bridge human language and rigid backends. Every LLM output fits your API's exact specification before it hits the wire.
+- **📊 Sales & CRM Automation** — Draft proposals, calculate pricing against business rules, and update lead status autonomously.
 - **🕵️ Smart Auditing & Compliance** — Create objects that read their own source contracts to populate audit fields and flag inconsistencies without manual oversight.
 - **📈 Intelligent Dashboarding** — Transform raw logs or transcripts into lists of structured objects (`ExoModelList`), ready for data visualization.
 
@@ -158,6 +189,11 @@ logging.getLogger("exomodel").setLevel(logging.WARNING)
 logging.basicConfig(level=logging.DEBUG)
 logging.getLogger("exomodel").setLevel(logging.DEBUG)
 ```
+
+---
+
+With ExoModel, your domain code stays domain code.  
+Your objects do what they were always meant to do — just smarter.
 
 ---
 

@@ -152,7 +152,7 @@ class ExoAgent:
             if self.vector_store is None:
                 return "No knowledge base initialized."
             results = self.vector_store.similarity_search_with_score(query, k=5)
-            SCORE_THRESHOLD = 0.75
+            SCORE_THRESHOLD = 0.5
             relevant = [
                 (doc, score) for doc, score in results
                 if score >= SCORE_THRESHOLD
@@ -362,9 +362,14 @@ class ExoAgent:
         """
         self._process_pending_rag()
 
-        if mode != "generalist" and not self.rag_tools:
+        if mode in ("specialist", "hybrid") and not self.rag_tools:
             logger.warning(
                 "Mode '%s' requested without RAG context. Falling back to 'generalist'.", mode
+            )
+            mode = "generalist"
+        elif mode == "orchestrator" and not self.all_tools:
+            logger.warning(
+                "Mode 'orchestrator' requested without any tools. Falling back to 'generalist'."
             )
             mode = "generalist"
 

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import pytest
 from unittest.mock import patch
 
 from exomodel.exomodel import ExoModel
@@ -78,6 +79,52 @@ def test_exomodel_list_create_list():
         assert model_list.items[0].name == "Extracted 1"
         assert model_list.items[1].name == "Extracted 2"
         assert isinstance(model_list.items[0], DummyItem)
+
+
+def test_update_list_raises_when_exceeds_limit():
+    """update_list must raise ValueError when item count exceeds MAX_ITEMS_FOR_UPDATE."""
+    model_list = ExoModelList(item_class=DummyItem)
+    model_list.items = [DummyItem(name=f"Item {i}", value=i) for i in range(31)]
+
+    with pytest.raises(ValueError, match="update_list\\(\\) supports up to 30 items"):
+        model_list.update_list("Mark all as high priority")
+
+
+def test_update_list_raises_exact_limit():
+    """update_list must raise ValueError at exactly MAX_ITEMS_FOR_UPDATE + 1 items."""
+    model_list = ExoModelList(item_class=DummyItem)
+    model_list.items = [DummyItem(name=f"Item {i}", value=i) for i in range(31)]
+
+    with pytest.raises(ValueError) as exc_info:
+        model_list.update_list("any instruction")
+
+    assert "31" in str(exc_info.value)
+    assert "update_object()" in str(exc_info.value)
+
+
+def test_update_list_at_limit_does_not_raise():
+    """update_list must not raise when item count is exactly at the limit (30)."""
+    model_list = ExoModelList(item_class=DummyItem)
+    model_list.items = [DummyItem(name=f"Item {i}", value=i) for i in range(30)]
+
+    mock_response = {"items": [{"name": f"Item {i}", "value": i} for i in range(30)]}
+
+    with patch.object(ExoModelList, "_get_prompt_create_list", return_value=MOCK_PROMPT), \
+         patch.object(ExoModelList, "run_llm", return_value=mock_response):
+        model_list.update_list("any instruction")  # must not raise
+
+
+def test_update_list_empty_delegates_to_create_list():
+    """update_list on an empty list must call create_list instead of raising."""
+    model_list = ExoModelList(item_class=DummyItem)
+    mock_response = {"items": [{"name": "Generated", "value": 1}]}
+
+    with patch.object(ExoModelList, "_get_prompt_create_list", return_value=MOCK_PROMPT), \
+         patch.object(ExoModelList, "run_llm", return_value=mock_response):
+        model_list.update_list("Generate one item")
+
+    assert len(model_list.items) == 1
+    assert model_list.items[0].name == "Generated"
 
 
 def test_exomodel_list_update_list():
