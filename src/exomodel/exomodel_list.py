@@ -13,7 +13,7 @@
 # limitations under the License.
 
 import os
-from typing import Any, Generic, Optional, TypeVar
+from typing import Any, Generic, Optional, TypeVar, get_args
 
 from pydantic import BaseModel, Field, PrivateAttr, create_model
 
@@ -50,16 +50,31 @@ class ExoModelList(BaseModel, Generic[T]):
     _exo_agent: Optional[ExoAgent] = PrivateAttr(default=None)
     _llm_tools_cache: Optional[list[Any]] = PrivateAttr(default=None)
 
+    def __init_subclass__(cls, **kwargs):
+        """Captures the concrete type argument from subclass declarations.
+
+        Fires when ``class MyList(ExoModelList[MyItem]): pass`` is defined, reading
+        ``__orig_bases__`` to extract the type argument and storing it as a plain class
+        attribute. This is more reliable than ``__class_getitem__`` because the subclass
+        is the actual class in the MRO, so ``getattr`` finds it directly.
+        """
+        super().__init_subclass__(**kwargs)
+        for base in getattr(cls, "__orig_bases__", []):
+            args = get_args(base)
+            if args and isinstance(args[0], type) and issubclass(args[0], ExoModel):
+                cls.__item_class__ = args[0]
+                break
+
     @classmethod
     def __class_getitem__(cls, item):
-        """Captures the concrete type argument so `__init__` can resolve `_item_class` without an explicit kwarg.
+        """Captures the concrete type argument for inline usage without subclassing.
 
-        Fires for both ``class MyList(ExoModelList[T])`` and inline ``ExoModelList[T]``.
+        Fires for ``ExoModelList[MyItem](...)`` direct instantiation.
         TypeVar arguments (still-unresolved generics) are skipped.
         """
         alias = super().__class_getitem__(item)
         if isinstance(item, type) and issubclass(item, ExoModel):
-            alias._item_class = item
+            alias.__item_class__ = item
         return alias
 
     def __init__(self, item_class: Optional[type[T]] = None, prompt: str = "", **data):
@@ -72,14 +87,14 @@ class ExoModelList(BaseModel, Generic[T]):
 
         Raises:
             TypeError: If the item class cannot be resolved from either the argument
-                       or the class-level attribute set by ``__class_getitem__``.
+                       or the class-level attribute set by ``__init_subclass__``.
         """
         super().__init__(**data)
 
-        # Runtime arg takes priority; fall back to the class-level attr set by
-        # __class_getitem__ when the user declares ExoModelList[ConcreteType].
-        resolved = item_class or getattr(self.__class__, "_item_class", None)
-        if resolved is None:
+        # Runtime arg takes priority; fall back to __item_class__ set by __init_subclass__
+        # (subclass pattern) or __class_getitem__ (inline pattern).
+        resolved = item_class or getattr(self.__class__, "__item_class__", None)
+        if not (isinstance(resolved, type) and issubclass(resolved, ExoModel)):
             raise TypeError(
                 "item_class must be provided as an argument or declared via "
                 "ExoModelList[ItemClass] (e.g. class MyList(ExoModelList[MyItem]): pass)."

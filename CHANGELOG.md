@@ -6,6 +6,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and
 
 ---
 
+## [1.0.3] — 2026-05-29
+
+### Fixed
+
+- **`ExoModelList` subclass fails when used as a nested field** — `__class_getitem__` set `_item_class` on the parameterized generic alias (e.g. `ExoModelList[Column]`), which is not part of the concrete subclass MRO. As a result, `getattr(ColumnList, "_item_class")` fell through to the `PrivateAttr` descriptor on `ExoModelList`, returning a `ModelPrivateAttr` object instead of the item class. This caused an `AttributeError` on `get_rag_sources()` whenever an `ExoModelList` subclass was used as a Pydantic field inside another `ExoModel`. Fixed by adding `__init_subclass__` to capture the type argument directly on the concrete subclass as a plain class attribute (`__item_class__`), and strengthening the `__init__` guard to validate that the resolved class is actually an `ExoModel` subclass.
+
+---
+
 ## [1.0.2] — 2026-05-16
 
 ### Fixed
