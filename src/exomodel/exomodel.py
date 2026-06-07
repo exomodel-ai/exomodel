@@ -380,8 +380,7 @@ class ExoModel(BaseModel):
                 if base_type not in (str, int, float, bool):
                     continue
 
-            default = field.default if field.default is not PydanticUndefined else None
-            fields_for_ai[name] = (Optional[field.annotation], default)
+            fields_for_ai[name] = (Optional[field.annotation], None)
 
         return create_model(f"{cls.__name__}Extraction", **fields_for_ai)
 
