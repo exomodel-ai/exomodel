@@ -4,10 +4,12 @@
 
 [![PyPI version](https://img.shields.io/pypi/v/exomodel?color=blue)](https://pypi.org/project/exomodel/)
 [![License](https://img.shields.io/github/license/exomodel-ai/exomodel)](https://github.com/exomodel-ai/exomodel/blob/main/LICENSE)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1WDA-rXlooKg9yVidP9nwr26CzrcBUNuE?usp=sharing)
 
 📖 **Official Documentation:** [https://exomodel.ai](https://exomodel.ai)  
 📦 **GitHub Repository:** [https://github.com/exomodel-ai/exomodel](https://github.com/exomodel-ai/exomodel)  
-📬 **Contact:** [contact@exomodel.ai](mailto:contact@exomodel.ai)
+📬 **Contact:** [contact@exomodel.ai](mailto:contact@exomodel.ai)  
+🚀 **Quick Demo (Colab):** [Try ExoModel in your browser](https://colab.research.google.com/drive/1WDA-rXlooKg9yVidP9nwr26CzrcBUNuE?usp=sharing)
 
 ---
 
